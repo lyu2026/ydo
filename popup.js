@@ -45,7 +45,7 @@ Element.prototype.da=function(){
 	return this
 }
 // ===============================
-let D=document,I=0,CM=[],US=[],PN=''
+let D=document,I=0,CM=[],US=[],PN='',UH=''
 const T=new TS({headingStyle:'atx',hr:'---',bulletListMarker:'-',codeBlockStyle:'fenced',emDelimiter:'*'})
 T.addRule('removeNoise',{
 	filter:['script','style','noscript','iframe','nav','footer','header','aside'],
@@ -55,6 +55,8 @@ T.addRule('removeNoise',{
 // ===============================
 ;(()=>{
 	const $=D.$(`.card #url`),lock=_=>{
+		const x=_&&_.startsWith('http')?new URL(_):{}
+		UH=x.origin
 		$.sa({value:($.defaultValue=_||''),readonly:'readonly'})
 		try{
 			Object.defineProperty($,'value',{get(){return _||''},set(){},configurable:false})
@@ -153,11 +155,11 @@ O.one=async(i=0)=>{
 		if(!o.ok)throw new Error('请求失败，错误码: '+o.status)
 		o=await o.text()
 		o=o.html()
-		o.$$('script,style,noscript,iframe,nav,footer,header,aside,.sidebar,.menu,.ad,.ads,.advertisement,.comments,.social,.related,.cookie-banner,.cookie,.popup,.modal,.overlay,.newsletter,.subscribe,.share,.social-share').forEach(_=>_.remove())
+		o.$$('script,style,noscript,iframe,nav,footer,header,aside,.sidebar,.menu,.ad,.ads,.advertisement,.comments,.social,.related,.cookie-banner,.cookie,.popup,.modal,.overlay,.newsletter,.subscribe,.share,.social-share,.dropdown').forEach(_=>_.remove())
 		const title=(o.$('h1')?.textContent||o.title||'无标题').split(/\s+[-|–—]\s+/)[0].trim()
 		const s=[
 			'article','main','[role="main"]',
-			'.post-content','.article-content','.entry-content',
+			'.post-content','.page-content','.article-content','.entry-content',
 			'.content','#content','.post','.article','.story-body',
 			'.article-body','.main-content','#main'
 		]
@@ -196,6 +198,7 @@ O.one=async(i=0)=>{
 	}
 }
 O.show=(_,title,yo,ny)=>{
+	D.$('.modal .download').sa('hide')
 	D.$('.modal .preview').innerText='预览'
 	D.$('.modal .pv').sa('hide').innerHTML=''
 	const $o=D.$('.modal pre').da('wait').da('hide')
@@ -239,81 +242,231 @@ O.copy=async()=>{
 	}
 	O.toast('已复制到剪贴板')
 }
+O.download=async()=>{
+	const $tp=D.$('.modal .tip').da('hide')
+	$tp.textContent='下载中...'
+	const filename=crypto.randomUUID().split('-').shift()+'.pdf',$pv=D.$('.modal .pv')
+	await Promise.allSettled($pv.$$('img').map(v=>new Promise(res=>{
+		if(!v.src||v.src.startsWith('data:')){res();return}
+		O.bg({t:'C',o:v.src},15000).then(_=>{
+			console.log(v.src,_||'…')
+			if(_?.ok)v.src=_.o
+			else v.sa('hide')
+		}).catch(()=>v.sa('hide')).finally(res)
+	})))
+	const pc=$pv.ga('style')||''
+	$pv.style.cssText=pc+';height:auto!important;overflow:visible!important;max-height:none!important'
+	try{
+		await html2pdf().set({
+			margin:[8,12,8,12],filename,
+			pagebreak:{mode:['css'],before:'.pb-before',after:'.pb-after',avoid:'.no-break'},
+			html2canvas:{
+				scale:2,useCORS:false,logging:false,
+				letterRendering:true,allowTaint:false,
+				backgroundColor:'#ffffff',
+				windowWidth:794,
+				scrollX:0,scrollY:0
+			},jsPDF:{
+				unit:'mm',format:'a4',orientation:'portrait',
+				precision:2,floatPrecision:2,compress:true
+			}
+		}).from($pv).save()
+		$tp.textContent='下载完成'
+		setTimeout(()=>$tp.sa('hide'),2500)
+	}catch(e){
+		$tp.textContent='❌ '+e.message
+		setTimeout(()=>$tp.sa('hide'),3000)
+	}finally{
+		$pv.sa({style:pc})
+	}
+}
 O.preview=()=>{
 	const $b=D.$('.modal .preview'),$o=D.$('.modal pre'),$v=D.$('.modal .pv')
 	if($b.innerText=='源码'){
 		$o.da('hide')
 		$b.innerText='预览'
 		$v.sa('hide').innerHTML=''
+		D.$('.modal .download').sa('hide')
 		return
 	}
 	$o.sa('hide')
 	$b.innerText='源码'
+
 	const s={
-		h1:'font-size:2em;margin-bottom:0.5em;font-weight:bold;padding-bottom:0.3em',
-		h2:'font-size:1.5em;margin-bottom:0.5em;font-weight:bold;padding-bottom:0.2em',
-		h3:'font-size:1.25em;margin-bottom:0.5em;font-weight:bold',
-		p:'line-height:1.6;margin-bottom:1em;color:#111',
-		blockquote:'border-left:4px solid #007bff;padding-left:1em;color:#6c757d;margin:0 0 1em 0;font-style:italic',
-		pre:'background-color:#f8f9fa;padding:1em;border-radius:5px;overflow-x:auto;margin-bottom:1em;border:1px solid #eaecf0;font-family:monospace',
-		ul:'list-style-type:disc;margin-left:2em;margin-bottom:1em',
-		ol:'list-style-type:decimal;margin-left:2em;margin-bottom:1em',
-		li:'margin-bottom:0.5em',
-		strong:'font-weight:800',
-		em:'font-style:italic',
-		hr:'margin:4px 0 24px 0!important',
-		code:'background-color:#f1f3f5;padding:0.2em 0.4em;border-radius:2px;font-family:monospace;font-size:85%',
-		a:'color:#007bff;text-decoration:none',
-		'a:hover':'text-decoration:underline'
-	},a=new Set(),g=t=>a.add(t),p=x=>{
-		let h=x;
-		[
-			[/`([^\`]+)`/g,'code','<code>$1</code>'],
-			[/\*\*([^*]+)\*\*/g,'strong','<strong>$1</strong>'],
-			[/\*([^*]+)\*/g,'em','<em>$1</em>'],
-			[/\[([^\]]+)\]\(([^)]+)\)/g,'a','<a href="$2" target="_blank">$1</a>']
-		].forEach(r=>{if(r[0].test(h)){g(r[1]);if(r[1]==='a')g('a:hover');h=h.replace(r[0],r[2])}})
+		h1:'font-size:1.9em;font-weight:bold;color:#000;margin:0.8em 0 0.4em;padding-bottom:0.2em;border-bottom:2px solid #eee;page-break-after:avoid',
+		h2:'font-size:1.5em;font-weight:bold;color:#000;margin:0.8em 0 0.4em;padding-bottom:0.15em;border-bottom:1px solid #eee;page-break-after:avoid',
+		h3:'font-size:1.2em;font-weight:bold;color:#000;margin:0.7em 0 0.3em;page-break-after:avoid',
+		h4:'font-size:1.05em;font-weight:bold;color:#000;margin:0.6em 0 0.3em;page-break-after:avoid',
+		h5:'font-size:0.95em;font-weight:bold;color:#333;margin:0.6em 0 0.3em;page-break-after:avoid',
+		h6:'font-size:0.9em;font-weight:bold;color:#555;margin:0.6em 0 0.3em;page-break-after:avoid',
+		p:'line-height:1.7;margin:0 0 0.9em;color:#111;page-break-inside:avoid',
+		blockquote:'border-left:4px solid #4a9eff;padding:0.4em 1em;color:#444;margin:0 0 1em;background:#f7faff;border-radius:0 4px 4px 0;page-break-inside:avoid',
+		pre:'background:#1e1e1e;color:#d4d4d4;padding:1em;border-radius:6px;overflow-x:auto;margin:0 0 1em;font-family:Consolas,Monaco,monospace;font-size:0.85em;line-height:1.5;page-break-inside:avoid',
+		ul:'list-style-type:disc;margin:0 0 1em 1.8em;color:#111;page-break-inside:avoid',
+		ol:'list-style-type:decimal;margin:0 0 1em 1.8em;color:#111;page-break-inside:avoid',
+		li:'margin-bottom:0.4em;line-height:1.6;color:#111;page-break-inside:avoid',
+		strong:'font-weight:700;color:#000',
+		em:'font-style:italic;color:#222',
+		del:'text-decoration:line-through;color:#888',
+		hr:'border:none;border-top:2px solid #e0e0e0;margin:1.2em 0',
+		code:'background:#f0f0f0;color:#c7254e;padding:0.15em 0.4em;border-radius:3px;font-family:Consolas,Monaco,monospace;font-size:87%',
+		a:'color:#1a73e8;text-decoration:none',
+		img:'max-width:100%;height:auto;display:block;margin:0.6em 0;border-radius:4px;page-break-inside:avoid',
+		table:'width:100%;border-collapse:collapse;margin:0 0 1em;font-size:0.9em;page-break-inside:avoid',
+		th:'border:1px solid #ccc;padding:7px 12px;background:#f5f5f5;font-weight:600;text-align:left;color:#000',
+		td:'border:1px solid #ddd;padding:6px 12px;color:#111',
+		checkbox:'margin-right:5px;vertical-align:middle'
+	}
+
+	// 行内解析（图片必须在链接前）
+	const p=x=>{
+		let h=x
+		// 先转义裸 < > & 防止 html 注入（保留已有标签先占位）
+		const rules=[
+			[/!\[([^\]]*)\]\(([^)]+)\)/g,(m,alt,src)=>`<img style="${s.img}" crossorigin="anonymous" src="${src.startsWith('http')?src:(UH+src)}" alt="${alt}" loading="lazy">`],
+			[/\[([^\]]+)\]\(([^)]+)\)/g,(m,t,href)=>`<a style="${s.a}" href="${href}" target="_blank" rel="noopener">${t}</a>`],
+			[/`([^`]+)`/g,(m,c)=>`<code style="${s.code}">${esc(c)}</code>`],
+			[/\*\*\*([^*]+)\*\*\*/g,(m,t)=>`<strong style="${s.strong}"><em style="${s.em}">${t}</em></strong>`],
+			[/\*\*([^*]+)\*\*/g,(m,t)=>`<strong style="${s.strong}">${t}</strong>`],
+			[/\*([^*]+)\*/g,(m,t)=>`<em style="${s.em}">${t}</em>`],
+			[/__([^_]+)__/g,(m,t)=>`<strong style="${s.strong}">${t}</strong>`],
+			[/_([^_]+)_/g,(m,t)=>`<em style="${s.em}">${t}</em>`],
+			[/~~([^~]+)~~/g,(m,t)=>`<del style="${s.del}">${t}</del>`],
+			// 裸 URL
+			[/(^|[\s(])(https?:\/\/[^\s<)"]+)/g,(m,pre,url)=>`${pre}<a style="${s.a}" href="${url.startsWith('http')?url:(UH+url)}" target="_blank" rel="noopener">${url}</a>`],
+		]
+		rules.forEach(([re,fn])=>{re.lastIndex=0;h=h.replace(re,fn)})
 		return h
 	}
-	let l=(CM[I]?.o||'').split('\n'),r=[],k=false,y=null,c=false,b=[],i=0,n='',d='',u=false,o=false,v=null,f=''
-	for(;i<l.length;i++){
-		n=l[i]
-		d=n.replace(/\\/g,'').trim()
-		if(d.startsWith('```')){
-			if(c){
-				g('pre')
-				r.push(`<pre><code>${b.join('\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`)
-				b=[]
-				c=false
-			}else c=true
-			continue
-		}
-		if(c){b.push(n);continue}
-		if(d=='---'){g('hr');r.push(`<hr>`);continue}
-		u=/^[\*\-\+] \s*/.test(d)
-		o=/^\d+\.\s+/.test(d)
-		if(k&&!u&&!o&&d!==''){r.push(`</${y}>`);k=false;y=null}
-		if(d==='')continue
+	const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 
-		if(d.startsWith('#')){
-			v=d.match(/^(#{1,3})\s+(.*)$/)
-			if(v){f=`h${v[1].length}`;g(f);r.push(`<${f}>${p(v[2])}</${f}>`);continue}
-		}
-		if(d.startsWith('>')){g('blockquote');r.push(`<blockquote>${p(d.replace(/^>\s*/,''))}</blockquote>`);continue}
-		if(u||o){
-			f=u?'ul':'ol'
-			if(!k||y!==f){if(k)r.push(`</${y}>`);g(f);r.push(`<${f}>`);k=true;y=f}
-			g('li')
-			r.push(`<li>${p(d.replace(u?/^[\*\-\+]\s+/:/^\d+\.\s+/,''))}</li>`)
+	const lines=(CM[I]?.o||'').split('\n')
+	const out=[]
+	let inCode=false,codeLang='',codeBuf=[]
+	let inTable=false,tableBuf=[]
+	let inList=false,listTag=''
+
+	const flushList=()=>{if(inList){out.push(`</${listTag}>`);inList=false;listTag=''}}
+	const flushTable=()=>{
+		if(!tableBuf.length)return
+		// 过滤分隔行
+		const rows=tableBuf.filter(r=>!/^\|[\s\|\-:]+\|$/.test(r))
+		if(!rows.length){tableBuf=[];inTable=false;return}
+		let h=`<table style="${s.table}"><thead><tr>`
+		rows[0].replace(/^\||\|$/g,'').split('|').forEach(c=>{
+			h+=`<th style="${s.th}">${p(c.trim())}</th>`
+		})
+		h+=`</tr></thead><tbody>`
+		rows.slice(1).forEach(row=>{
+			h+=`<tr>`
+			row.replace(/^\||\|$/g,'').split('|').forEach(c=>{
+				h+=`<td style="${s.td}">${p(c.trim())}</td>`
+			})
+			h+=`</tr>`
+		})
+		h+=`</tbody></table>`
+		out.push(h)
+		tableBuf=[];inTable=false
+	}
+
+	for(let i=0;i<lines.length;i++){
+		const raw=lines[i]
+		const d=raw.replace(/\\/g,'').trim()
+
+		// 代码块
+		if(d.startsWith('```')){
+			if(inTable){flushTable()}
+			flushList()
+			if(inCode){
+				out.push(`<pre style="${s.pre}"><code>${esc(codeBuf.join('\n'))}</code></pre>`)
+				codeBuf=[];inCode=false;codeLang=''
+			}else{
+				inCode=true
+				codeLang=d.slice(3).trim()
+			}
 			continue
 		}
-		g('p')
-		r.push(`<p>${p(d)}</p>`)
+		if(inCode){codeBuf.push(raw);continue}
+
+		// 表格行
+		if(d.startsWith('|')&&d.endsWith('|')){
+			flushList()
+			if(!inTable){
+				// 下一行是分隔行则确认是表格
+				const nx=(lines[i+1]||'').trim()
+				if(/^\|[\s\|\-:]+\|$/.test(nx)){inTable=true}
+			}
+			if(inTable){tableBuf.push(d);continue}
+		}else if(inTable){flushTable()}
+
+		// 空行
+		if(d===''){flushList();continue}
+
+		// 分割线（--- 或 *** 或 ___）
+		if(/^[-*_]{3,}$/.test(d)){flushList();out.push(`<hr style="${s.hr}">`);continue}
+
+		// 标题
+		if(d.startsWith('#')){
+			flushList()
+			const m=d.match(/^(#{1,6})\s+(.*)$/)
+			if(m){
+				const lv=Math.min(m[1].length,6),tag=`h${lv}`
+				out.push(`<${tag} class="no-break" style="${s[tag]}">${p(m[2])}</${tag}>`)
+				continue
+			}
+		}
+
+		// 引用（支持多层 >>）
+		if(d.startsWith('>')){
+			flushList()
+			out.push(`<blockquote class="no-break" style="${s.blockquote}">${p(d.replace(/^>+\s*/,''))}</blockquote>`)
+			continue
+		}
+
+		// 列表（含任务列表）
+		const isUl=/^[-*+]\s/.test(d)
+		const isOl=/^\d+\.\s/.test(d)
+		if(isUl||isOl){
+			const tag=isUl?'ul':'ol'
+			if(!inList||listTag!==tag){
+				flushList()
+				out.push(`<${tag} style="${s[tag]}">`)
+				inList=true;listTag=tag
+			}
+			let content=d.replace(isUl?/^[-*+]\s+/:/^\d+\.\s+/,'')
+			let checkbox=''
+			if(/^\[ \]\s/.test(content)){checkbox=`<input type="checkbox" style="${s.checkbox}" disabled>`;content=content.slice(4)}
+			else if(/^\[x\]\s/i.test(content)){checkbox=`<input type="checkbox" style="${s.checkbox}" disabled checked>`;content=content.slice(4)}
+			out.push(`<li class="no-break" style="${s.li}">${checkbox}${p(content)}</li>`)
+			continue
+		}
+
+		// 段落（连续非空行合并）
+		flushList()
+		let para=d
+		// 合并软换行（下一行非空且不是特殊语法）
+		while(
+			i+1<lines.length&&
+			lines[i+1].trim()!==''&&
+			!lines[i+1].trim().startsWith('#')&&
+			!lines[i+1].trim().startsWith('>')&&
+			!lines[i+1].trim().startsWith('|')&&
+			!/^[-*+]\s/.test(lines[i+1].trim())&&
+			!/^\d+\.\s/.test(lines[i+1].trim())&&
+			!lines[i+1].trim().startsWith('```')&&
+			!/^[-*_]{3,}$/.test(lines[i+1].trim())
+		){
+			i++
+			para+=' '+lines[i].replace(/\\/g,'').trim()
+		}
+		out.push(`<p class="no-break" style="${s.p}">${p(para)}</p>`)
 	}
-	if(k)r.push(`</${y}>`)
-	let css=`.modal .pv{font-family:system-ui,sans-serif;line-height:1.5;padding:20px}`
-	Object.keys(s).forEach(t=>a.has(t)?css+=`.modal .pv ${t}{${s[t]}}`:null)
-	$v.da('hide').innerHTML=`<style>${css}</style>${r.join('\n  ')}`
+	flushList()
+	flushTable()
+	if(inCode)out.push(`<pre style="${s.pre}"><code>${esc(codeBuf.join('\n'))}</code></pre>`)
+
+	$v.da('hide').innerHTML=`<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:4px 10px;color:#111;max-width:100%">${out.join('\n')}</div>`
+	D.$('.modal .download').da('hide')
 }
 
 // ===============================
@@ -325,6 +478,7 @@ D.addEventListener('DOMContentLoaded',()=>{
 	D.$('.modal .prev').addEventListener('click',()=>O.one(I-1))
 	D.$('.modal .next').addEventListener('click',()=>O.one(I+1))
 	D.$('.modal .preview').addEventListener('click',()=>O.preview())
+	D.$('.modal .download').addEventListener('click',()=>O.download())
 	D.$('.modal .close').addEventListener('click',O.close)
 	D.addEventListener('keydown',e=>(e.key==='Escape'&&!D.$('.modal').ha('hide'))&&O.close())
 })

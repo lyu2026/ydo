@@ -8,7 +8,17 @@ const Y=async(_,to='zh-CN')=>{
 
 chrome.runtime.onMessage.addListener((k,_,r)=>{
 	if(k.t=='O')chrome.windows.create({url:'popup.html',type:'popup',width:420,height:560})
-	else if(k.t=='Y'){
+	else if(k.t=='C'){
+		fetch(k.o).then(_=>_.arrayBuffer()).then(_=>{
+			const u8=new Uint8Array(_)
+			let b=''
+			for(let i=0;i<u8.length;i+=8192)b+=String.fromCharCode(...u8.subarray(i,i+8192))
+			const ext=(k.o.match(/\.(png|gif|webp|svg|jpeg|jpg)/i)||['','jpeg'])[1].toLowerCase()
+			const mime=ext==='svg'?'svg+xml':ext==='jpg'?'jpeg':ext
+			console.log(mime,btoa(b))
+			r({ok:true,o:`data:image/${mime};base64,${btoa(b)}`})
+		}).catch(e=>r({ok:false,x:e.message}))
+	}else if(k.t=='Y'){
 		(async()=>{
 			try{
 				let ix=false,xc='',xx=await Y(k.x.trim())
