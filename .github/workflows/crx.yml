@@ -33,22 +33,22 @@ jobs:
 
     - name: 压缩
       run: |
-        zip -r ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip"
+        zip -r 译览刀.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip" "*.pem"
 
     - name: 打包
-      run: python crx.py ydo.zip key.pem ydo.crx
+      run: python crx.py 译览刀.zip key.pem 译览刀.crx
 
     - name: 上传
       uses: actions/upload-artifact@v4
       with:
         name: chrome-extension
-        path: ydo.crx
+        path: 译览刀.crx
 
     - name: 发布
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: ydo.crx
+        files: 译览刀.crx
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

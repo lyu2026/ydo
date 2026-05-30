@@ -1,6 +1,6 @@
 {
 	"manifest_version":3,
-	"name":"译览刀",
+	"name":"ydo",
 	"version":"1.0.0",
 	"description":"提取网页正文并转换为 MD，支持翻译为中文",
 	"permissions":["activeTab","scripting"],
@@ -13,7 +13,7 @@
 			"48":"cs/icon48.png",
 			"128":"cs/icon128.png"
 		},
-		"default_title":"译览刀"
+		"default_title":"ydo"
 	},
 	"icons":{
 		"36":"cs/icon36.png",
