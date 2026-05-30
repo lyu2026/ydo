@@ -177,7 +177,7 @@ O.one=async(i=0)=>{
 		n.$$('*').forEach(_=>(!_.textContent.trim()&&!['IMG','BR','HR'].includes(_.tagName)&&!_.children.length)&&_.remove())
 		if(!n)throw new Error('无法提取正文')
 		let y=false,html=n.innerHTML||n.outerHTML,text=n.innerText.trim()
-		o=T.turndown(html).replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim()
+		o=T.turndown(html).replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').replace(/([ \t]*\n[ \t]*){3,}/g,'\n\n').trim()
 		o=[`# ${title}`,'',`*${url}*`,'','---','',o].join('\n')
 		if(text&&text.length>=10){
 			const z=text.replace(/[\s\d\W]/g,'')
