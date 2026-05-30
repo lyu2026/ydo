@@ -31,19 +31,19 @@ jobs:
           openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
         fi
 
-    - name: 打包 crx（平铺）
+    - name: 打包
       run: |
+        # 1. 准备 crx 用的平铺包
         zip -r 译览刀_flat.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip" "*.pem"
         python crx.py 译览刀_flat.zip key.pem 译览刀.crx
         rm 译览刀_flat.zip
 
-    - name: 打包 zip（仅 extension 目录）
-      run: |
-        mkdir extension
+        # 2. 准备 zip（仅一个 extension 目录）
+        mkdir -p build/extension
         shopt -s extglob
-        cp -r !(extension|.git|.github|*.md|*.py|*.crx|*.zip|*.pem) extension/ 2>/dev/null || true
-        cd extension && zip -r ../译览刀.zip ./* && cd ..
-        rm -rf extension
+        cp -r !(build|.git|.github|*.md|*.py|*.crx|*.zip|*.pem) build/extension/ 2>/dev/null || true
+        cd build && zip -r ../译览刀.zip extension/ && cd ..
+        rm -rf build
 
     - name: 上传
       uses: actions/upload-artifact@v4
