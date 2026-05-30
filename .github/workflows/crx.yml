@@ -31,24 +31,34 @@ jobs:
           openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
         fi
 
-    - name: 压缩
+    - name: 打包 crx（平铺）
       run: |
         zip -r 译览刀.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip" "*.pem"
+        python crx.py 译览刀.zip key.pem 译览刀.crx
 
-    - name: 打包
-      run: python crx.py 译览刀.zip key.pem 译览刀.crx
+    - name: 打包 zip（含 extension 目录）
+      run: |
+        mkdir -p extension
+        shopt -s extglob
+        cp -r !(extension|.git|.github|*.md|*.py|*.crx|*.zip|*.pem) extension/ 2>/dev/null || true
+        zip -r 译览刀.zip extension/
+        rm -rf extension
 
     - name: 上传
       uses: actions/upload-artifact@v4
       with:
         name: chrome-extension
-        path: 译览刀.crx
+        path: |
+          译览刀.crx
+          译览刀.zip
 
     - name: 发布
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: 译览刀.crx
+        files: |
+          译览刀.crx
+          译览刀.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
