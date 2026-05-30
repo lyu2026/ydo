@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<link rel='stylesheet' href='pp.css'>
+<title>译览刀</title>
+</head>
+<body>
+	<div class='card'>
+		<div class='title'><div>🌐 → 📝</div><h1>译览刀</h1><p>提取 · 转换 · 翻译 · 无需本地服务</p></div>
+		<div class='subtitle'><span>✨ 提取正文</span><span>🔄 格式转换</span><span>🌍 免费翻译</span></div>
+		<div class='field'>
+			<label for='url'>网站链接 <span ro>（当前页面，只读）</span></label>
+			<div>
+				<input id='url' readonly autocomplete='off' placeholder='正在获取当前页面链接...' />
+				<span>🔒 只读</span>
+			</div>
+		</div>
+		<div class='field'>
+			<label for='css'>批处理器 <span>（可选）</span></label>
+			<div><textarea id='css' autocomplete='off' placeholder='CSS选择器@属性，例：&#10;#content article .entry-title>a@href&#10;.pagination a@href'></textarea></div>
+		</div>
+		<div class='submit'>开始转换</div>
+		<div class='progress' hide><span></span><span class='tip'>正在获取网页内容...</span></div>
+		<div class='error' hide></div>
+	</div>
+
+	<div class='modal' hide>
+		<div>
+			<div class='head'>
+				<h2><span class='title'>...</span><span class='trand' hide>已翻译</span></h2>
+				<div>
+					<div class='tip' hide></div>
+					<div class='trans' hide>翻译</div>
+					<div class='copy'>复制</div>
+					<div class='prev' hide>上个</div>
+					<div class='next' hide>下个</div>
+					<div class='close'>╳</div>
+				</div>
+			</div>
+			<div class='core'><pre></pre></div>
+		</div>
+	</div>
+
+	<script src='td.js'></script>
+	<script src='pp.js'></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+	"manifest_version":3,
+	"name":"译览刀",
+	"version":"1.0.0",
+	"description":"提取网页正文并转换为 MD，支持翻译为中文",
+	"permissions":["activeTab","scripting"],
+	"host_permissions":["<all_urls>"],
+	"background":{"service_worker":"bg.js"},
+	"action":{
+		"default_popup":"pp.html",
+		"default_icon":{
+			"36":"cs/icon36.png",
+			"48":"cs/icon48.png",
+			"128":"cs/icon128.png"
+		},
+		"default_title":"译览刀"
+	},
+	"icons":{
+		"36":"cs/icon36.png",
+		"48":"cs/icon48.png",
+		"128":"cs/icon128.png"
+	},
+	"content_security_policy":{
+		"extension_pages":"script-src 'self'; object-src 'self'"
+	}
+}

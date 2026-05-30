@@ -1,0 +1,58 @@
+name: 打扩展包
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: C
+      uses: actions/checkout@v4
+
+    - name: P
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 依赖
+      run: pip install cryptography
+
+    - name: 私钥
+      id: keygen
+      run: |
+        if [ ! -f key.pem ]; then
+          openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
+        fi
+
+    - name: 压缩
+      run: |
+        zip -r ../ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.crx"
+        cd ..
+
+    - name: 打包
+      run: python scripts/build-crx.py ydo.zip key.pem ydo.crx
+
+    - name: 上传
+      uses: actions/upload-artifact@v4
+      with:
+        name: chrome-extension
+        path: ydo.crx
+
+    - name: 发布
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ydo.crx
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
