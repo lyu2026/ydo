@@ -7,7 +7,7 @@
 	"host_permissions":["<all_urls>"],
 	"background":{"service_worker":"background.js"},
 	"action":{
-		"default_popup":"poppup.html",
+		"default_popup":"popup.html",
 		"default_icon":{
 			"36":"icons/36.png",
 			"48":"icons/48.png",
