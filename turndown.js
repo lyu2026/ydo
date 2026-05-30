@@ -18,35 +18,35 @@
 		const html=typeof x==='string'?x:x.outerHTML||''
 		const doc=new DOMParser().parseFromString('<x-root>'+html+'</x-root>','text/html')
 		const root=doc.querySelector('x-root')||doc.body
-		const o=this._process(root).trim()
+		const o=this._pcs(root).trim()
 		return o.replace(/\n{3,}/g,'\n\n')
 	}
-	TS.prototype._process=function(node){
+	TS.prototype._pcs=function(node){
 		let self=this,o=''
-		node.childNodes.forEach(_=>{o+=self._convert(_)})
+		node.childNodes.forEach(_=>{o+=self._cvt(_)})
 		return o
 	}
-	TS.prototype._convert=function(node){
-		if(node.nodeType===3)return this._escape(node.nodeValue)
+	TS.prototype._cvt=function(node){
+		if(node.nodeType===3)return this._esc(node.nodeValue)
 		if(node.nodeType!==1)return ''
 		const tag=node.nodeName.toLowerCase()
 		for(let i=0;i<this.rules.length;i++){
 			const r=this.rules[i]
-			if(this._matches(node,r.filter)){
-				const content=this._process(node)
+			if(this._mcs(node,r.filter)){
+				const content=this._pcs(node)
 				const result=r.replacement(content,node,this.options)
 				if(result!=null)return result
 			}
 		}
-		return this._defaultRule(node,tag)
+		return this._dru(node,tag)
 	}
-	TS.prototype._matches=function(node,filter){
+	TS.prototype._mcs=function(node,filter){
 		if(typeof filter==='string')return node.nodeName.toLowerCase()===filter
 		if(Array.isArray(filter))return filter.indexOf(node.nodeName.toLowerCase())>=0
 		if(typeof filter==='function')return filter(node)
 		return false
 	}
-	TS.prototype._escape=function(text){
+	TS.prototype._esc=function(text){
 		if(!text)return ''
 		return text
 			.replace(/\\/g,'\\\\').replace(/\*/g,'\\*').replace(/^-/gm,'\\-')
@@ -55,8 +55,8 @@
 			.replace(/\]/g,'\\]').replace(/_/g,'\\_')
 	}
 
-	TS.prototype._defaultRule=function(node,tag){
-		let content=this._process(node),opts=this.options
+	TS.prototype._dru=function(node,tag){
+		let content=this._pcs(node),opts=this.options
 		switch(tag){
 			case 'h1':case 'h2':case 'h3':case 'h4':case 'h5':case 'h6':
 				let level=parseInt(tag[1])
@@ -100,15 +100,15 @@
 				node.childNodes.forEach(function(child){
 					if(child.nodeName.toLowerCase()!=='li')return
 					let c=''
-					child.childNodes.forEach(n=>{c+=this._convert(n)},this)
+					child.childNodes.forEach(n=>{c+=this._cvt(n)},this)
 					c=c.trim().replace(/\n{2,}/g,'\n\n').replace(/\n/g,'\n    ')
 					let bullet=tag==='ul'?opts.bulletListMarker+' ':(idx++)+'. '
 					items.push(bullet+c)
 				},this)
 				return '\n\n'+items.join('\n')+'\n\n'
-			case 'li':return this._process(node)
+			case 'li':return this._pcs(node)
 			case 'blockquote':return '\n\n'+content.trim().split('\n').map(l=>`> ${l}`).join('\n')+'\n\n'
-			case 'table':return this._convertTable(node)
+			case 'table':return this._ctb(node)
 			case 'thead':case 'tbody':case 'tfoot':return content
 			case 'tr':return content
 			case 'th':case 'td':return content
@@ -117,13 +117,12 @@
 			default:return content
 		}
 	}
-	TS.prototype._convertTable=function(table){
+	TS.prototype._ctb=function(table){
 		let rows=Array.from(table.querySelectorAll('tr'))
 		if(!rows.length)return ''
 		let self=this
-
 		function cellText(cell){
-			return self._process(cell).trim().replace(/\n/g,' ').replace(/\|/g,'\\|')
+			return self._pcs(cell).trim().replace(/\n/g,' ').replace(/\|/g,'\\|')
 		}
 		let out=[]
 		rows.forEach(function(row,ri){

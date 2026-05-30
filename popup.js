@@ -196,7 +196,9 @@ O.one=async(i=0)=>{
 	}
 }
 O.show=(_,title,yo,ny)=>{
-	const $o=D.$('.modal pre').da('wait')
+	D.$('.modal .preview').innerText='预览'
+	D.$('.modal .pv').sa('hide').innerHTML=''
+	const $o=D.$('.modal pre').da('wait').da('hide')
 	$o.textContent=_
 	$o.scrollTop=0
 	D.$('.modal .trans').da('disabled')[ny&&!yo?'da':'sa']('hide')
@@ -237,6 +239,85 @@ O.copy=async()=>{
 	}
 	O.toast('已复制到剪贴板')
 }
+O.source=()=>{
+	D.$('.modal pre').da('hide')
+	D.$('.modal .pv').sa('hide').innerHTML=''
+}
+O.preview=()=>{
+	const $b=D.$('.modal .preview'),$o=D.$('.modal pre'),$v=D.$('.modal .pv')
+	if($b.innerText=='源码'){
+		$o.da('hide')
+		$b.innerText='预览'
+		$v.sa('hide').innerHTML=''
+		return
+	}
+	$o.sa('hide')
+	$b.innerText='源码'
+	const s={
+		h1:'font-size:2em;margin-bottom:0.5em;font-weight:bold;color:#333;border-bottom:1px solid #eee;padding-bottom:0.3em',
+		h2:'font-size:1.5em;margin-bottom:0.5em;font-weight:bold;color:#444;border-bottom:1px solid #eee;padding-bottom:0.2em',
+		h3:'font-size:1.25em;margin-bottom:0.5em;font-weight:bold;color:#555',
+		p:'line-height:1.6;margin-bottom:1em;color:#666',
+		blockquote:'border-left:4px solid #007bff;padding-left:1em;color:#6c757d;margin:0 0 1em 0;font-style:italic',
+		pre:'background-color:#f8f9fa;padding:1em;border-radius:5px;overflow-x:auto;margin-bottom:1em;border:1px solid #eaecf0;font-family:monospace',
+		ul:'list-style-type:disc;margin-left:2em;margin-bottom:1em',
+		ol:'list-style-type:decimal;margin-left:2em;margin-bottom:1em',
+		li:'margin-bottom:0.5em',
+		strong:'font-weight:bold;color:#111',
+		em:'font-style:italic',
+		code:'background-color:#f1f3f5;padding:0.2em 0.4em;border-radius:3px;font-family:monospace;font-size:85%',
+		a:'color:#007bff;text-decoration:none',
+		'a:hover':'text-decoration:underline'
+	},a=new Set(),g=t=>a.add(t),p=x=>{
+		let h=x;
+		[
+			[/`([^\`]+)`/g,'code','<code>$1</code>'],
+			[/\*\*([^*]+)\*\*/g,'strong','<strong>$1</strong>'],
+			[/\*([^*]+)\*/g,'em','<em>$1</em>'],
+			[/\[([^\]]+)\]\(([^)]+)\)/g,'a','<a href="$2" target="_blank">$1</a>']
+		].forEach(r=>{if(r[0].test(h)){g(r[1]);if(r[1]==='a')g('a:hover');h=h.replace(r[0],r[2])}})
+		return h
+	}
+	let l=(CM[I]?.o||'').split('\n'),r=[],k=false,y=null,c=false,b=[],i=0,n='',d='',u=false,o=false,v=null,f=''
+	for(;i<l.length;i++){
+		n=l[i]
+		d=n.trim()
+		if(d.startsWith('```')){
+			if(c){
+				g('pre')
+				r.push(`<pre><code>${b.join('\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`)
+				b=[]
+				c=false
+			}else c=true
+			continue
+		}
+
+		if(c){b.push(n);continue}
+		u=/^[\*\-\+] \s*/.test(d)
+		o=/^\d+\.\s+/.test(d)
+		if(k&&!u&&!o&&d!==''){r.push(`</${y}>`);k=false;y=null}
+		if(d==='')continue
+
+		if(d.startsWith('#')){
+			v=d.match(/^(#{1,3})\s+(.*)$/)
+			if(v){f=`h${v[1].length}`;g(f);r.push(`<${f}>${p(v[2])}</${f}>`);continue}
+		}
+		if(d.startsWith('>')){g('blockquote');r.push(`<blockquote>${p(d.replace(/^>\s*/,''))}</blockquote>`);continue}
+		if(u||o){
+			f=u?'ul':'ol'
+			if(!k||y!==f){if(k)r.push(`</${y}>`);g(f);r.push(`<${f}>`);k=true;y=f}
+			g('li')
+			r.push(`  <li>${p(d.replace(u?/^[\*\-\+]\s+/:/^\d+\.\s+/,''))}</li>`)
+			continue
+		}
+		g('p')
+		r.push(`<p>${p(d)}</p>`)
+	}
+	if(k)r.push(`</${y}>`)
+	let css=`.modal .pv{font-family:system-ui,sans-serif;line-height:1.5;padding:20px}`
+	Object.keys(s).forEach(t=>a.has(t)?css+=`.modal .pv ${t}{${s[t]}}`:null)
+	$v.innerHTML=`<style>${css}</style><div class="modal pv">\n  ${r.join('\n  ')}\n</div>`
+}
 
 // ===============================
 D.addEventListener('DOMContentLoaded',()=>{
@@ -245,6 +326,8 @@ D.addEventListener('DOMContentLoaded',()=>{
 	D.$('.modal .copy').addEventListener('click',O.copy)
 	D.$('.modal .prev').addEventListener('click',()=>O.one(I-1))
 	D.$('.modal .next').addEventListener('click',()=>O.one(I+1))
+	D.$('.modal .source').addEventListener('click',()=>O.source())
+	D.$('.modal .preview').addEventListener('click',()=>O.preview())
 	D.$('.modal .close').addEventListener('click',O.close)
 	D.addEventListener('keydown',e=>(e.key==='Escape'&&!D.$('.modal').ha('hide'))&&O.close())
 })
