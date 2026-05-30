@@ -3,7 +3,7 @@
 	"name":"译览刀",
 	"version":"1.0.0",
 	"description":"网页正文 转换为 MD文档，支持中文翻译",
-	"permissions":["activeTab","scripting"],
+	"permissions":["tabs","activeTab","scripting"],
 	"host_permissions":["<all_urls>"],
 	"background":{"service_worker":"background.js"},
 	"action":{
@@ -19,6 +19,13 @@
 		},
 		"default_title":"译览刀"
 	},
+	"content_scripts":[
+		{
+			"matches":["<all_urls>"],
+			"css":["content.css"],
+			"js":["content.js"]
+		}
+	],
 	"icons":{
 		"16":"icons/16.png",
 		"32":"icons/32.png",

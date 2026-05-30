@@ -319,6 +319,7 @@ O.preview=()=>{
 // ===============================
 D.addEventListener('DOMContentLoaded',()=>{
 	D.$('.card .submit').addEventListener('click',O.submit)
+	D.$('.card .close').addEventListener('click',()=>window.close())
 	D.$('.modal .trans').addEventListener('click',O.trans)
 	D.$('.modal .copy').addEventListener('click',O.copy)
 	D.$('.modal .prev').addEventListener('click',()=>O.one(I-1))

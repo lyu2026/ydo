@@ -7,7 +7,8 @@ const Y=async(_,to='zh-CN')=>{
 }
 
 chrome.runtime.onMessage.addListener((k,_,r)=>{
-	if(k.t=='Y'){
+	if(k.t=='O')chrome.windows.create({url:'popup.html',type:'popup',width:420,height:560})
+	else if(k.t=='Y'){
 		(async()=>{
 			try{
 				let ix=false,xc='',xx=await Y(k.x.trim())
