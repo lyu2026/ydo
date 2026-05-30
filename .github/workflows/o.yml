@@ -34,7 +34,7 @@ jobs:
     - name: 打包
       run: |
         zip -r o.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip" "*.pem"
-        python package_crx.py o.zip key.pem trans_blade.crx
+        python pkg_crx.py o.zip key.pem trans_blade.crx
         rm o.zip
 
         mkdir -p build/extension
