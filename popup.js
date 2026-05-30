@@ -177,7 +177,7 @@ O.one=async(i=0)=>{
 		n.$$('*').forEach(_=>(!_.textContent.trim()&&!['IMG','BR','HR'].includes(_.tagName)&&!_.children.length)&&_.remove())
 		if(!n)throw new Error('无法提取正文')
 		let y=false,html=n.innerHTML||n.outerHTML,text=n.innerText.trim()
-		o=T.turndown(html).replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').replace(/([ \t]*\n[ \t]*){3,}/g,'\n\n').trim()
+		o=T.turndown(html).replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').replace(/([ \t]*\n[ \t]*){3,}/g,'\n\n').replace(/(\n+\-{3}){2,}/g,'\n\n---').trim()
 		o=[`# ${title}`,'',`*${url}*`,'','---','',o].join('\n')
 		if(text&&text.length>=10){
 			const z=text.replace(/[\s\d\W]/g,'')
@@ -239,10 +239,6 @@ O.copy=async()=>{
 	}
 	O.toast('已复制到剪贴板')
 }
-O.source=()=>{
-	D.$('.modal pre').da('hide')
-	D.$('.modal .pv').sa('hide').innerHTML=''
-}
 O.preview=()=>{
 	const $b=D.$('.modal .preview'),$o=D.$('.modal pre'),$v=D.$('.modal .pv')
 	if($b.innerText=='源码'){
@@ -254,18 +250,19 @@ O.preview=()=>{
 	$o.sa('hide')
 	$b.innerText='源码'
 	const s={
-		h1:'font-size:2em;margin-bottom:0.5em;font-weight:bold;color:#333;border-bottom:1px solid #eee;padding-bottom:0.3em',
-		h2:'font-size:1.5em;margin-bottom:0.5em;font-weight:bold;color:#444;border-bottom:1px solid #eee;padding-bottom:0.2em',
-		h3:'font-size:1.25em;margin-bottom:0.5em;font-weight:bold;color:#555',
-		p:'line-height:1.6;margin-bottom:1em;color:#666',
+		h1:'font-size:2em;margin-bottom:0.5em;font-weight:bold;padding-bottom:0.3em',
+		h2:'font-size:1.5em;margin-bottom:0.5em;font-weight:bold;padding-bottom:0.2em',
+		h3:'font-size:1.25em;margin-bottom:0.5em;font-weight:bold',
+		p:'line-height:1.6;margin-bottom:1em;color:#111',
 		blockquote:'border-left:4px solid #007bff;padding-left:1em;color:#6c757d;margin:0 0 1em 0;font-style:italic',
 		pre:'background-color:#f8f9fa;padding:1em;border-radius:5px;overflow-x:auto;margin-bottom:1em;border:1px solid #eaecf0;font-family:monospace',
 		ul:'list-style-type:disc;margin-left:2em;margin-bottom:1em',
 		ol:'list-style-type:decimal;margin-left:2em;margin-bottom:1em',
 		li:'margin-bottom:0.5em',
-		strong:'font-weight:bold;color:#111',
+		strong:'font-weight:800',
 		em:'font-style:italic',
-		code:'background-color:#f1f3f5;padding:0.2em 0.4em;border-radius:3px;font-family:monospace;font-size:85%',
+		hr:'margin:4px 0 24px 0!important',
+		code:'background-color:#f1f3f5;padding:0.2em 0.4em;border-radius:2px;font-family:monospace;font-size:85%',
 		a:'color:#007bff;text-decoration:none',
 		'a:hover':'text-decoration:underline'
 	},a=new Set(),g=t=>a.add(t),p=x=>{
@@ -281,7 +278,7 @@ O.preview=()=>{
 	let l=(CM[I]?.o||'').split('\n'),r=[],k=false,y=null,c=false,b=[],i=0,n='',d='',u=false,o=false,v=null,f=''
 	for(;i<l.length;i++){
 		n=l[i]
-		d=n.trim()
+		d=n.replace(/\\/g,'').trim()
 		if(d.startsWith('```')){
 			if(c){
 				g('pre')
@@ -291,8 +288,8 @@ O.preview=()=>{
 			}else c=true
 			continue
 		}
-
 		if(c){b.push(n);continue}
+		if(d=='---'){g('hr');r.push(`<hr>`);continue}
 		u=/^[\*\-\+] \s*/.test(d)
 		o=/^\d+\.\s+/.test(d)
 		if(k&&!u&&!o&&d!==''){r.push(`</${y}>`);k=false;y=null}
@@ -307,7 +304,7 @@ O.preview=()=>{
 			f=u?'ul':'ol'
 			if(!k||y!==f){if(k)r.push(`</${y}>`);g(f);r.push(`<${f}>`);k=true;y=f}
 			g('li')
-			r.push(`  <li>${p(d.replace(u?/^[\*\-\+]\s+/:/^\d+\.\s+/,''))}</li>`)
+			r.push(`<li>${p(d.replace(u?/^[\*\-\+]\s+/:/^\d+\.\s+/,''))}</li>`)
 			continue
 		}
 		g('p')
@@ -316,7 +313,7 @@ O.preview=()=>{
 	if(k)r.push(`</${y}>`)
 	let css=`.modal .pv{font-family:system-ui,sans-serif;line-height:1.5;padding:20px}`
 	Object.keys(s).forEach(t=>a.has(t)?css+=`.modal .pv ${t}{${s[t]}}`:null)
-	$v.innerHTML=`<style>${css}</style><div class="modal pv">\n  ${r.join('\n  ')}\n</div>`
+	$v.da('hide').innerHTML=`<style>${css}</style>${r.join('\n  ')}`
 }
 
 // ===============================
@@ -326,7 +323,6 @@ D.addEventListener('DOMContentLoaded',()=>{
 	D.$('.modal .copy').addEventListener('click',O.copy)
 	D.$('.modal .prev').addEventListener('click',()=>O.one(I-1))
 	D.$('.modal .next').addEventListener('click',()=>O.one(I+1))
-	D.$('.modal .source').addEventListener('click',()=>O.source())
 	D.$('.modal .preview').addEventListener('click',()=>O.preview())
 	D.$('.modal .close').addEventListener('click',O.close)
 	D.addEventListener('keydown',e=>(e.key==='Escape'&&!D.$('.modal').ha('hide'))&&O.close())
