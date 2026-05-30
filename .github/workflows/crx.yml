@@ -36,11 +36,10 @@ jobs:
 
     - name: 压缩
       run: |
-        zip -r ../ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.crx"
-        cd ..
+        zip -r ../ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx"
 
     - name: 打包
-      run: python scripts/build-crx.py ydo.zip key.pem ydo.crx
+      run: python crx.py ydo.zip key.pem ydo.crx
 
     - name: 上传
       uses: actions/upload-artifact@v4
