@@ -36,7 +36,7 @@ jobs:
 
     - name: 压缩
       run: |
-        zip -r ../ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip"
+        zip -r ydo.zip ./* -x "*.git*" ".github/*" "*.md" "*.py" "*.crx" "*.zip"
 
     - name: 打包
       run: python crx.py ydo.zip key.pem ydo.crx
